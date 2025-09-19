@@ -78,20 +78,19 @@ impl State {
 
         let surface = instance.create_surface(window.clone()).unwrap();
 
-        // handle to graphics card
-        let mut adapters = instance
+        // handle to graphics card - prefer dx12 on windows due to transparency issues with vulkan
+        let adapter = instance
             .enumerate_adapters(backends)
             .into_iter()
             .filter(|adapter| adapter.is_surface_supported(&surface))
-            .fold(std::collections::HashMap::new(), |mut acc, adapter| {
-                acc.insert(adapter.get_info().backend.clone(), adapter);
-                acc
-            });
-
-        // there is issues with vulkan on windows with certain hardware only allowing opaque surfaces so dx12 is preferred
-        let adapter = adapters
-            .remove(&wgpu::Backend::Dx12)
-            .or_else(|| adapters.into_values().next())
+            .max_by_key(|adapter| {
+                match adapter.get_info().backend {
+                    wgpu::Backend::Dx12 => 3,    // highest priority
+                    wgpu::Backend::Metal => 2,   // second priority
+                    wgpu::Backend::Vulkan => 1,  // lower priority due to transparency issues
+                    _ => 0,                      // lowest priority
+                }
+            })
             .unwrap();
         println!("Using adapter: {:?}", adapter.get_info());
 
