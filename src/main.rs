@@ -39,6 +39,7 @@ struct State {
 
     pub surface: wgpu::Surface<'static>,
     surface_format: wgpu::TextureFormat,
+    alpha_mode: wgpu::CompositeAlphaMode,
 
     pub pipeline: wgpu::RenderPipeline,
     pub queue: wgpu::Queue,
@@ -60,6 +61,12 @@ impl State {
         let size = window.surface_size();
 
         let backends = wgpu::Backends::PRIMARY;
+        #[cfg(target_os = "windows")]
+        let alpha_mode = wgpu::CompositeAlphaMode::PreMultiplied;
+        #[cfg(target_os = "macos")]
+        let alpha_mode = wgpu::CompositeAlphaMode::PostMultiplied;
+        #[cfg(target_os = "linux")]
+        let alpha_mode = wgpu::CompositeAlphaMode::Auto;
 
         let mut backend_options = wgpu::BackendOptions::default();
         backend_options.dx12.presentation_system = wgpu::wgt::Dx12SwapchainKind::DxgiFromVisual;
@@ -179,6 +186,7 @@ impl State {
         let depth_texture_format = wgpu::TextureFormat::Depth24PlusStencil8;
 
         let mut state = Self {
+            alpha_mode,
             window,
             device,
             queue,
@@ -214,7 +222,7 @@ impl State {
                 format: self.surface_format,
                 // Request compatibility with the sRGB-format texture view we‘re going to create later.
                 view_formats: vec![self.surface_format.add_srgb_suffix()],
-                alpha_mode: wgpu::CompositeAlphaMode::PreMultiplied,
+                alpha_mode: self.alpha_mode,
                 width: self.size.width,
                 height: self.size.height,
                 desired_maximum_frame_latency: 2,
