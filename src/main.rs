@@ -35,7 +35,6 @@ impl VertexInput {
 
 struct State {
     window: Arc<dyn Window>,
-    pub adapter: wgpu::Adapter,
     pub device: wgpu::Device,
 
     pub surface: wgpu::Surface<'static>,
@@ -64,7 +63,7 @@ impl State {
         backend_options.dx12.presentation_system = wgpu::wgt::Dx12SwapchainKind::DxgiFromVisual;
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::DX12,
-            backend_options: backend_options,
+            backend_options,
             ..Default::default()
         });
 
@@ -168,13 +167,12 @@ impl State {
 
         let mut state = Self {
             window,
-            adapter,
             device,
             queue,
             surface,
             surface_format: swapchain_format,
             pipeline: render_pipeline,
-            bind_group: bind_group,
+            bind_group,
             data_buffer: data_buf,
             depth_texture: None,
             depth_texture_format,
@@ -297,21 +295,10 @@ impl State {
     }
 }
 
+#[derive(Default)]
 struct App {
     state: Option<State>,
-    last_render_time: std::time::Instant,
 }
-
-impl Default for App {
-    fn default() -> Self {
-        Self {
-            state: None,
-            last_render_time: std::time::Instant::now(),
-        }
-    }
-}
-
-enum Event {}
 
 impl ApplicationHandler for App {
     fn can_create_surfaces(&mut self, event_loop: &dyn ActiveEventLoop) {
@@ -344,9 +331,6 @@ impl ApplicationHandler for App {
                 event_loop.exit();
             }
             WindowEvent::RedrawRequested => {
-                let now = std::time::Instant::now();
-                let dt = now - self.last_render_time;
-                self.last_render_time = now;
                 state.render();
                 // Emits a new redraw requested event.
                 state.window.request_redraw();
