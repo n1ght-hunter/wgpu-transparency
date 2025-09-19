@@ -2,10 +2,9 @@
 Simple example showing how to do transparency with WGPU.
 
 ## Works on
-- Windows (DX12 backend)
-- MacOS (Metal backend)
-
-Linux needs testing contributions welcome.
+- Windows (DX12 backend(Premultiplied alpha))
+- MacOS (Metal backend(Postmultiplied alpha))
+- Linux (Vulkan backend(Premultiplied alpha))
 
 ## Issues
 - Vulken backend on windows only shows opaque as alpha option
