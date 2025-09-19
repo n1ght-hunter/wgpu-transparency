@@ -59,10 +59,12 @@ impl State {
     async fn new(window: Arc<dyn Window>) -> State {
         let size = window.surface_size();
 
+        let backends = wgpu::Backends::PRIMARY;
+
         let mut backend_options = wgpu::BackendOptions::default();
         backend_options.dx12.presentation_system = wgpu::wgt::Dx12SwapchainKind::DxgiFromVisual;
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::DX12,
+            backends,
             backend_options,
             ..Default::default()
         });
@@ -70,10 +72,21 @@ impl State {
         let surface = instance.create_surface(window.clone()).unwrap();
 
         // handle to graphics card
-        let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions::default())
-            .await
+        let mut adapters = instance
+            .enumerate_adapters(backends)
+            .into_iter()
+            .filter(|adapter| adapter.is_surface_supported(&surface))
+            .fold(std::collections::HashMap::new(), |mut acc, adapter| {
+                acc.insert(adapter.get_info().backend.clone(), adapter);
+                acc
+            });
+
+        // there is issues with vulkan on windows with certain hardware only allowing opaque surfaces so dx12 is preferred
+        let adapter = adapters
+            .remove(&wgpu::Backend::Dx12)
+            .or_else(|| adapters.into_values().next())
             .unwrap();
+        println!("Using adapter: {:?}", adapter.get_info());
 
         // get device and queue
         let (device, queue) = adapter
