@@ -66,7 +66,7 @@ impl State {
         #[cfg(target_os = "macos")]
         let alpha_mode = wgpu::CompositeAlphaMode::PostMultiplied;
         #[cfg(target_os = "linux")]
-        let alpha_mode = wgpu::CompositeAlphaMode::Auto;
+        let alpha_mode = wgpu::CompositeAlphaMode::PreMultiplied;
 
         let mut backend_options = wgpu::BackendOptions::default();
         backend_options.dx12.presentation_system = wgpu::wgt::Dx12SwapchainKind::DxgiFromVisual;
